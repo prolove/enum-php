@@ -50,18 +50,27 @@ abstract class ConstAnnotationsParser
                     if ($isConst) {
                         $annotations = array();
                         $lines = preg_split('/\R/', $doc);
-                        foreach ($lines as $line) {
-                            $line = trim($line, "/* \t\x0B\0");
-                            if ($line === '') {
-                                continue;
-                            }
-                            preg_match_all("/@(\w+)\(\s*([^\(]*?)\s*\)/", $line, $match);
-                            if (\is_array($match) && count($match) > 0) {
-                                for ($i = 0, $iMax = count($match[0]); $i < $iMax; $i++) {
-                                    $annotations[$match[1][$i]] = trim($match[2][$i], "'\"");
+                        if (strpos($doc, '@') !== false) {
+                            foreach ($lines as $line) {
+                                $line = trim($line, "/* \t\x0B\0");
+                                if ($line === '') {
+                                    continue;
                                 }
+                                preg_match_all("/@(\w+)\(\s*([^\(]*?)\s*\)/", $line, $match);
+                                if (\is_array($match) && count($match) > 0) {
+                                    for ($i = 0, $iMax = count($match[0]); $i < $iMax; $i++) {
+                                        $annotations[$match[1][$i]] = trim($match[2][$i], "'\"");
+                                    }
+                                }
+                                $constantsAnnotations[$tokenValue] = $annotations;
                             }
-                            $constantsAnnotations[$tokenValue] = $annotations;
+                        } else {
+                            // If @ desc ('xxxx ') is not set, the first line of the annotation will be extracted by default
+                            preg_match("/([\r\n\t\s\*\-\+]+)([^\r\n\t]+)/", $doc, $matches);
+                            if ($matches) {
+                                $annotations['desc'] = trim($matches[2]);
+                                $constantsAnnotations[$tokenValue] = $annotations;
+                            }
                         }
                     }
                     $doc = null;
